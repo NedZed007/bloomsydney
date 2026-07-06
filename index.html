@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BloomSydney — Greater Sydney Florist Marketplace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="#" class="logo">
+        <span class="logo-icon">✿</span>
+        <span class="logo-text">Bloom<em>Sydney</em></span>
+      </a>
+      <nav class="main-nav">
+        <button class="nav-tab active" data-view="shop">Shop</button>
+        <button class="nav-tab" data-view="florists">Our Florists</button>
+        <button class="nav-tab" data-view="routing">Order Routing</button>
+      </nav>
+      <button class="cart-btn" id="cartToggle" aria-label="Open cart">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 01-8 0"/>
+        </svg>
+        <span class="cart-count" id="cartCount">0</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- SHOP VIEW -->
+    <section id="view-shop" class="view active">
+      <div class="hero">
+        <div class="hero-content">
+          <p class="hero-eyebrow">Greater Sydney delivery</p>
+          <h1>Fresh flowers from local florists, routed to your suburb</h1>
+          <p class="hero-sub">Ten partner florists across Greater Sydney — routed to the studio closest to your delivery postcode or suburb.</p>
+          <div class="hero-postcode">
+            <label for="heroPostcode">Check delivery to your postcode or suburb</label>
+            <div class="postcode-input-group">
+              <input type="text" id="heroPostcode" placeholder="e.g. 2000 or Manly">
+              <button type="button" id="heroCheckBtn">Check</button>
+            </div>
+            <p class="hero-result" id="heroResult" hidden></p>
+          </div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="hero-bloom hero-bloom-1">🌸</div>
+          <div class="hero-bloom hero-bloom-2">🌺</div>
+          <div class="hero-bloom hero-bloom-3">🌷</div>
+        </div>
+      </div>
+
+      <div class="section-inner">
+        <div class="section-header">
+          <h2>Today's arrangements</h2>
+          <p>Handcrafted by Sydney's finest local florists</p>
+        </div>
+        <div class="product-grid" id="productGrid"></div>
+      </div>
+    </section>
+
+    <!-- FLORISTS VIEW -->
+    <section id="view-florists" class="view">
+      <div class="section-inner">
+        <div class="section-header">
+          <h2>Partner florists</h2>
+          <p>Ten real local florists across Greater Sydney</p>
+        </div>
+        <div class="florist-grid" id="floristGrid"></div>
+        <div class="coverage-map">
+          <h3>Service coverage</h3>
+          <p>Orders are automatically routed to the florist closest to the delivery postcode or suburb using straight-line distance.</p>
+          <div class="map-legend" id="mapLegend"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROUTING VIEW (Admin workflow) -->
+    <section id="view-routing" class="view">
+      <div class="section-inner routing-layout">
+        <div class="section-header">
+          <h2>Order routing workflow</h2>
+          <p>Simulate and approve florist assignment by postcode or suburb proximity</p>
+        </div>
+
+        <div class="routing-grid">
+          <div class="routing-panel">
+            <h3>1. Enter delivery postcode or suburb</h3>
+            <div class="postcode-input-group large">
+              <input type="text" id="routingPostcode" placeholder="e.g. 2150 or Parramatta">
+              <button type="button" id="routingSimulateBtn">Route order</button>
+            </div>
+            <p class="hint">Try postcodes: 2000, 2022, 2067, 2095, 2150 — or suburbs: Manly, Chatswood, Parramatta, Bondi Junction, Campbelltown</p>
+
+            <h3>2. Routing result</h3>
+            <div class="routing-result" id="routingResult">
+              <div class="routing-placeholder">
+                <span class="routing-icon">📍</span>
+                <p>Enter a postcode or suburb to see which florist will fulfil the order.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="routing-panel">
+            <h3>3. Distance ranking</h3>
+            <div class="distance-table-wrap">
+              <table class="distance-table" id="distanceTable">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Florist</th>
+                    <th>Suburb</th>
+                    <th>Distance</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="distanceTableBody">
+                  <tr><td colspan="5" class="empty-row">No location entered</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>4. Pending orders queue</h3>
+            <div class="order-queue" id="orderQueue">
+              <p class="empty-queue">No orders yet. Complete a checkout to see routed orders here.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="routing-rules">
+          <h3>Routing rules</h3>
+          <ul>
+            <li><strong>Primary:</strong> Resolve delivery location by 4-digit postcode or suburb name, then assign to the florist with the shortest straight-line distance.</li>
+            <li><strong>Tie-break:</strong> If distances are within 2 km, prefer the florist with higher availability rating.</li>
+            <li><strong>Fallback:</strong> If postcode is outside Greater Sydney bounds, flag for manual review.</li>
+            <li><strong>Override:</strong> You can manually reassign any pending order from the queue below.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- CART DRAWER -->
+  <aside class="cart-drawer" id="cartDrawer" aria-hidden="true">
+    <div class="cart-header">
+      <h2>Your cart</h2>
+      <button class="close-btn" id="cartClose" aria-label="Close cart">&times;</button>
+    </div>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-checkout">
+      <div class="checkout-field">
+        <label for="checkoutPostcode">Delivery postcode</label>
+        <input type="text" id="checkoutPostcode" placeholder="e.g. 2145" maxlength="4" inputmode="numeric">
+      </div>
+      <div class="checkout-field">
+        <label for="checkoutSuburb">Suburb (postcode or suburb required)</label>
+        <input type="text" id="checkoutSuburb" placeholder="e.g. Westmead or Parramatta">
+      </div>
+      <div class="checkout-field">
+        <label for="checkoutName">Recipient name</label>
+        <input type="text" id="checkoutName" placeholder="Full name">
+      </div>
+      <div class="checkout-field">
+        <label for="checkoutNotes">Delivery notes</label>
+        <textarea id="checkoutNotes" rows="2" placeholder="Gate code, leave at door, etc."></textarea>
+      </div>
+      <div class="assigned-florist" id="assignedFlorist" hidden></div>
+      <div class="cart-total">
+        <span>Total</span>
+        <span id="cartTotal">$0.00</span>
+      </div>
+      <button type="button" class="btn-primary full-width" id="placeOrderBtn" disabled>Place order</button>
+    </div>
+  </aside>
+  <div class="cart-overlay" id="cartOverlay"></div>
+
+  <!-- ORDER CONFIRMATION MODAL -->
+  <dialog class="modal" id="orderModal">
+    <div class="modal-content">
+      <button class="close-btn modal-close" id="modalClose">&times;</button>
+      <div class="modal-icon">✓</div>
+      <h2>Order placed!</h2>
+      <p id="modalMessage"></p>
+      <button type="button" class="btn-primary full-width" id="modalEmailFlorist">✉ Email florist for pick-up</button>
+      <button type="button" class="btn-secondary" id="modalOk">Continue shopping</button>
+    </div>
+  </dialog>
+
+  <footer class="site-footer">
+    <p>BloomSydney — Florist marketplace for Greater Sydney suburbs</p>
+    <p class="footer-sub">Parramatta · Bankstown · Penrith · Campbelltown · Ashfield · Chatswood · Bondi Junction · Manly · Liverpool · Hornsby</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
