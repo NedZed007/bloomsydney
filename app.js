@@ -163,15 +163,72 @@ const FLORISTS = [
   },
 ];
 
+const BOUQUET_OF_THE_DAY = {
+  id: 'bouquet-of-the-day',
+  name: 'Bouquet of the Day',
+  image: 'https://images.unsplash.com/photo-1561181280-a5bf79c985a8?w=800&h=600&fit=crop&q=80',
+  desc: 'Handpicked seasonal blooms from today\'s Sydney markets — roses, lisianthus & native greenery.',
+  price: 79,
+  wasPrice: 95,
+};
+
 const PRODUCTS = [
-  { id: 'classic-rose', name: 'Classic Rose Bouquet', emoji: '🌹', desc: 'A dozen premium red roses with eucalyptus', price: 89 },
-  { id: 'native-wild', name: 'Native Wildflower Mix', emoji: '🌼', desc: 'Banksia, waratah & kangaroo paw in rustic wrap', price: 75 },
-  { id: 'spring-garden', name: 'Spring Garden Box', emoji: '🌷', desc: 'Tulips, daffodils & hyacinth in a gift box', price: 65 },
-  { id: 'orchid-elegance', name: 'Orchid Elegance', emoji: '🪻', desc: 'Single white phalaenopsis in ceramic pot', price: 95 },
-  { id: 'sunshine-bunch', name: 'Sunshine Bunch', emoji: '🌻', desc: 'Bright sunflowers with seasonal fillers', price: 55 },
-  { id: 'sympathy-wreath', name: 'Sympathy Wreath', emoji: '🤍', desc: 'White lilies & chrysanthemums on standing wreath', price: 120 },
-  { id: 'luxury-mixed', name: 'Luxury Mixed Arrangement', emoji: '💐', desc: 'Premium seasonal blooms in glass vase', price: 110 },
-  { id: 'succulent-garden', name: 'Succulent Garden', emoji: '🌵', desc: 'Assorted succulents in modern concrete planter', price: 70 },
+  {
+    id: 'classic-rose',
+    name: 'Classic Rose Bouquet',
+    image: 'https://images.unsplash.com/photo-1518895949257-762f342f0634?w=600&h=450&fit=crop&q=80',
+    desc: 'A dozen premium red roses with eucalyptus',
+    price: 89,
+  },
+  {
+    id: 'native-wild',
+    name: 'Native Wildflower Mix',
+    image: 'https://images.unsplash.com/photo-1490759847158-90c04da0cdc8?w=600&h=450&fit=crop&q=80',
+    desc: 'Banksia, waratah & kangaroo paw in rustic wrap',
+    price: 75,
+  },
+  {
+    id: 'spring-garden',
+    name: 'Spring Garden Box',
+    image: 'https://images.unsplash.com/photo-1520763185298-1b434c919102?w=600&h=450&fit=crop&q=80',
+    desc: 'Tulips, daffodils & hyacinth in a gift box',
+    price: 65,
+  },
+  {
+    id: 'orchid-elegance',
+    name: 'Orchid Elegance',
+    image: 'https://images.unsplash.com/photo-1566554273541-37a660714505?w=600&h=450&fit=crop&q=80',
+    desc: 'Single white phalaenopsis in ceramic pot',
+    price: 95,
+  },
+  {
+    id: 'sunshine-bunch',
+    name: 'Sunshine Bunch',
+    image: 'https://images.unsplash.com/photo-1597848212624-e593b4b5a923?w=600&h=450&fit=crop&q=80',
+    desc: 'Bright sunflowers with seasonal fillers',
+    price: 55,
+  },
+  {
+    id: 'sympathy-wreath',
+    name: 'Sympathy Wreath',
+    image: 'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=600&h=450&fit=crop&q=80',
+    desc: 'White lilies & chrysanthemums on standing wreath',
+    price: 120,
+  },
+  {
+    id: 'luxury-mixed',
+    name: 'Luxury Mixed Arrangement',
+    image: 'https://images.unsplash.com/photo-1582794543139-59c8d05333bc?w=600&h=450&fit=crop&q=80',
+    desc: 'Premium seasonal blooms in glass vase',
+    price: 110,
+  },
+  {
+    id: 'succulent-garden',
+    name: 'Succulent Garden',
+    image: 'https://images.unsplash.com/photo-1459410337905-4f0aecec0c6f?w=600&h=450&fit=crop&q=80',
+    desc: 'Assorted succulents in modern concrete planter',
+    price: 70,
+  },
 ];
 
 /* Greater Sydney postcode centroids (sample set for routing demo) */
@@ -535,12 +592,19 @@ function routeOrder(input) {
 
 /* ── Rendering ── */
 
+function getProduct(productId) {
+  if (productId === BOUQUET_OF_THE_DAY.id) return BOUQUET_OF_THE_DAY;
+  return PRODUCTS.find((p) => p.id === productId);
+}
+
 function renderProducts() {
   const grid = document.getElementById('productGrid');
   grid.innerHTML = PRODUCTS.map(
     (p) => `
     <article class="product-card">
-      <div class="product-image">${p.emoji}</div>
+      <div class="product-image">
+        <img src="${p.image}" alt="${p.name}" loading="lazy">
+      </div>
       <div class="product-body">
         <h3>${p.name}</h3>
         <p class="product-desc">${p.desc}</p>
@@ -604,10 +668,10 @@ function renderCart() {
 
   itemsEl.innerHTML = cart
     .map((item) => {
-      const product = PRODUCTS.find((p) => p.id === item.id);
+      const product = getProduct(item.id);
       return `
       <div class="cart-item" data-id="${item.id}">
-        <span class="cart-item-emoji">${product.emoji}</span>
+        <img class="cart-item-thumb" src="${product.image}" alt="">
         <div class="cart-item-details">
           <h4>${product.name}</h4>
           <span class="cart-item-price">$${(product.price * item.qty).toFixed(2)}</span>
@@ -622,7 +686,7 @@ function renderCart() {
     .join('');
 
   const total = cart.reduce((s, i) => {
-    const p = PRODUCTS.find((x) => x.id === i.id);
+    const p = getProduct(i.id);
     return s + p.price * i.qty;
   }, 0);
   totalEl.textContent = `$${total.toFixed(2)}`;
@@ -842,7 +906,7 @@ function placeOrder() {
   }
 
   const items = cart.map((i) => {
-    const p = PRODUCTS.find((x) => x.id === i.id);
+    const p = getProduct(i.id);
     return { name: p.name, qty: i.qty, price: p.price };
   });
   const total = items.reduce((s, i) => s + i.price * i.qty, 0);
@@ -954,6 +1018,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('placeOrderBtn').addEventListener('click', placeOrder);
   document.getElementById('routingSimulateBtn').addEventListener('click', simulateRouting);
   document.getElementById('heroCheckBtn').addEventListener('click', checkHeroPostcode);
+  document.getElementById('dealAddBtn').addEventListener('click', () => addToCart(BOUQUET_OF_THE_DAY.id));
 
   document.getElementById('checkoutPostcode').addEventListener('input', updateAssignedFloristPreview);
   document.getElementById('checkoutSuburb').addEventListener('input', updateAssignedFloristPreview);
