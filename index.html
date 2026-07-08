@@ -37,31 +37,31 @@
     <section id="view-shop" class="view active">
       <div class="hero">
         <div class="hero-content">
-          <p class="hero-eyebrow">Greater Sydney delivery</p>
-          <h1>Fresh flowers from local florists, routed to your suburb</h1>
-          <p class="hero-sub">Ten partner florists across Greater Sydney — routed to the studio closest to your delivery postcode or suburb.</p>
-          <div class="hero-postcode">
-            <label for="heroPostcode">Check delivery to your postcode or suburb</label>
-            <div class="postcode-input-group">
-              <input type="text" id="heroPostcode" placeholder="e.g. 2000 or Manly">
-              <button type="button" id="heroCheckBtn">Check</button>
-            </div>
-            <p class="hero-result" id="heroResult" hidden></p>
+          <p class="hero-eyebrow">Fresh from the Sydney Flower Market</p>
+          <h1>Sydney's local florists, delivered to your harbour city suburb</h1>
+          <p class="hero-sub">Ten trusted florists from Manly to Penrith, Bondi to Campbelltown — every order routed to the studio closest to your suburb.</p>
+          <div class="hero-suburbs">
+            <span>Manly</span>
+            <span>Bondi Junction</span>
+            <span>Parramatta</span>
+            <span>Chatswood</span>
+            <span>Penrith</span>
+            <span>+5 more</span>
           </div>
         </div>
         <aside class="hero-deal" id="heroDeal">
-          <span class="deal-badge">Today's special deal</span>
+          <span class="deal-badge">Today's special order</span>
           <div class="deal-image-wrap">
             <img
-              src="https://images.unsplash.com/photo-1561181280-a5bf79c985a8?w=800&h=600&fit=crop&q=80"
-              alt="Bouquet of the Day — seasonal mixed blooms"
+              src="assets/bouquets/bouquet-special.jpg"
+              alt="Bouquet Special Order of the Day — lush seasonal blooms"
               class="deal-image"
               loading="eager"
             >
           </div>
           <div class="deal-body">
-            <h2 class="deal-title">Bouquet of the Day</h2>
-            <p class="deal-desc">Handpicked seasonal blooms from today's Sydney markets — roses, lisianthus &amp; native greenery.</p>
+            <h2 class="deal-title">Bouquet Special Order of the Day</h2>
+            <p class="deal-desc">The florist's daily masterpiece — a lush seasonal mix of roses, berries &amp; native foliage, handpicked at the Sydney Flower Market this morning.</p>
             <div class="deal-pricing">
               <span class="deal-price">$79.00</span>
               <span class="deal-was">$95.00</span>
@@ -71,10 +71,18 @@
         </aside>
       </div>
 
+      <div class="sydney-banner">
+        <img src="assets/bouquets/sydney-harbour.jpg" alt="Sydney Harbour with the Opera House and city skyline" loading="lazy">
+        <div class="sydney-banner-overlay">
+          <p class="sydney-banner-eyebrow">Proudly Sydney</p>
+          <p class="sydney-banner-text">Same-day blooms across Greater Sydney — from the harbour to the Blue Mountains foothills.</p>
+        </div>
+      </div>
+
       <div class="section-inner">
         <div class="section-header">
-          <h2>Today's arrangements</h2>
-          <p>Handcrafted by Sydney's finest local florists</p>
+          <h2>Today's Sydney arrangements</h2>
+          <p>Handcrafted daily by Sydney's finest local florists</p>
         </div>
         <div class="product-grid" id="productGrid"></div>
       </div>
@@ -102,6 +110,15 @@
         <div class="section-header">
           <h2>Order routing workflow</h2>
           <p>Simulate and approve florist assignment by postcode or suburb proximity</p>
+        </div>
+
+        <div class="routing-checker">
+          <label for="heroPostcode">Check delivery &amp; estimate fee by postcode or suburb</label>
+          <div class="postcode-input-group">
+            <input type="text" id="heroPostcode" placeholder="e.g. 2000 or Manly">
+            <button type="button" id="heroCheckBtn">Check</button>
+          </div>
+          <p class="hero-result" id="heroResult" hidden></p>
         </div>
 
         <div class="routing-grid">
