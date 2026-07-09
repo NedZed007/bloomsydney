@@ -161,6 +161,22 @@ const FLORISTS = [
     color: '#84cc16',
     specialties: ['Upper North Shore', 'Westfield Hornsby', 'Hills district delivery'],
   },
+  {
+    id: 'greenacre',
+    name: 'Abdo Florist',
+    suburb: 'Greenacre',
+    postcode: '2190',
+    address: '245 Waterloo Road, Greenacre NSW 2190',
+    phone: '02 9759 7324',
+    email: 'info@abdoflorist.com.au',
+    website: 'https://abdoflorist.com.au',
+    region: 'South-West Sydney',
+    lat: -33.9042,
+    lng: 151.0525,
+    availability: 90,
+    color: '#b45309',
+    specialties: ['7-day 8am–8pm', 'Same-day Sydney-wide', 'Waterloo Road studio'],
+  },
 ];
 
 const BOUQUET_OF_THE_DAY = {
@@ -325,7 +341,7 @@ const POSTCODE_COORDS = {
   '2170': { lat: -33.9200, lng: 150.9200, suburb: 'Liverpool' },
   '2171': { lat: -33.9000, lng: 150.9000, suburb: 'Casula' },
   '2176': { lat: -33.9500, lng: 150.8800, suburb: 'Green Valley' },
-  '2190': { lat: -33.9100, lng: 151.0700, suburb: 'Chullora' },
+  '2190': { lat: -33.9042, lng: 151.0525, suburb: 'Greenacre' },
   '2191': { lat: -33.9000, lng: 151.0600, suburb: 'Belfield' },
   '2192': { lat: -33.8900, lng: 151.0800, suburb: 'Belmore' },
   '2193': { lat: -33.9100, lng: 151.1000, suburb: 'Ashbury' },
@@ -770,7 +786,8 @@ function buildFloristPickupEmail(order) {
     itemLines,
     '',
     `Order total: $${order.total.toFixed(2)} (flowers only — pick-up, no delivery fee)`,
-    order.notes ? `\nNotes: ${order.notes}` : '',
+    order.notes ? `Delivery notes: ${order.notes}` : '',
+    order.cardMessage ? `Card message: ${order.cardMessage}` : '',
     '',
     'Please confirm availability and the expected ready-for-pick-up time.',
     '',
@@ -894,6 +911,7 @@ function placeOrder() {
   const suburb = document.getElementById('checkoutSuburb').value.trim();
   const recipientName = document.getElementById('checkoutName').value.trim();
   const notes = document.getElementById('checkoutNotes').value.trim();
+  const cardMessage = document.getElementById('checkoutCardMessage').value.trim();
 
   // Use postcode if provided, otherwise fall back to the suburb field.
   const input = postcode || suburb;
@@ -917,6 +935,7 @@ function placeOrder() {
     suburb: result.location.suburb,
     recipientName,
     notes,
+    cardMessage,
     items,
     total,
     assignedFloristId: result.winner.id,
@@ -941,6 +960,7 @@ function placeOrder() {
   document.getElementById('checkoutSuburb').value = '';
   document.getElementById('checkoutName').value = '';
   document.getElementById('checkoutNotes').value = '';
+  document.getElementById('checkoutCardMessage').value = '';
   document.getElementById('assignedFlorist').hidden = true;
   renderCart();
   closeCart();
