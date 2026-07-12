@@ -1,5 +1,18 @@
 /* BloomSydney — Florist marketplace & postcode routing */
 
+/* ── Stripe config (TODO: replace placeholders before going live) ── */
+const STRIPE_CONFIG = {
+  // Publishable key — safe in frontend; used for future Stripe.js features
+  publishableKey: 'pk_test_REPLACE_WITH_YOUR_PUBLISHABLE_KEY',
+  // Deploy stripe-server/ to Vercel/Netlify, then paste the endpoint URL here
+  apiUrl: 'https://YOUR_PROJECT.vercel.app/api/create-checkout-session',
+  // Set to true once apiUrl and Stripe keys are configured
+  enabled: false,
+};
+
+const ORDER_STORAGE_KEY = 'bloomsydney_order_queue';
+const ORDER_COUNTER_KEY = 'bloomsydney_order_counter';
+
 const FLORISTS = [
   {
     id: 'parramatta',
@@ -428,6 +441,81 @@ let orderQueue = [];
 let orderCounter = 1;
 let lastOrder = null;
 
+/* ── Order persistence (survives Stripe redirect) ── */
+
+function loadOrderQueue() {
+  try {
+    const raw = localStorage.getItem(ORDER_STORAGE_KEY);
+    if (raw) orderQueue = JSON.parse(raw);
+    const counter = localStorage.getItem(ORDER_COUNTER_KEY);
+    if (counter) orderCounter = Math.max(1, parseInt(counter, 10) || 1);
+  } catch {
+    orderQueue = [];
+  }
+}
+
+function saveOrderQueue() {
+  try {
+    localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(orderQueue));
+    localStorage.setItem(ORDER_COUNTER_KEY, String(orderCounter));
+  } catch {
+    /* localStorage unavailable */
+  }
+}
+
+function getOrderPaymentStatus(order) {
+  return order.paymentStatus || 'pending';
+}
+
+function paymentStatusLabel(status) {
+  if (status === 'paid') return 'Paid';
+  if (status === 'failed') return 'Payment failed';
+  return 'Payment pending';
+}
+
+function isStripeConfigured() {
+  return (
+    STRIPE_CONFIG.enabled &&
+    STRIPE_CONFIG.apiUrl &&
+    !STRIPE_CONFIG.apiUrl.includes('YOUR_PROJECT')
+  );
+}
+
+function renderPaymentsInfo() {
+  const el = document.getElementById('paymentsInfo');
+  if (!el) return;
+
+  const configured = isStripeConfigured();
+
+  if (configured) {
+    el.className = 'payments-info payments-info--ready';
+    el.innerHTML = `
+      <div class="payments-info-header">
+        <span class="payments-info-icon" aria-hidden="true">💳</span>
+        <h3>Payments</h3>
+        <span class="payments-status-badge ready">Stripe configured</span>
+      </div>
+      <p>Card payments are enabled. Each order in the queue below shows a <strong>payment status</strong> badge and a <strong>Pay with card</strong> button until paid.</p>
+      <p class="payments-info-hint">Customers complete checkout via Stripe; successful payments return here with status <em>Paid</em>.</p>`;
+    return;
+  }
+
+  el.className = 'payments-info payments-info--setup';
+  el.innerHTML = `
+    <div class="payments-info-header">
+      <span class="payments-info-icon" aria-hidden="true">💳</span>
+      <h3>Payments</h3>
+      <span class="payments-status-badge setup">Setup needed</span>
+    </div>
+    <p>Stripe is not configured yet. Orders still show <strong>Payment pending</strong> badges and a <strong>Pay with card (setup needed)</strong> button so you can see where card payments will appear.</p>
+    <ol class="payments-setup-steps">
+      <li>Deploy the backend in <a href="stripe-server/README.md" target="_blank" rel="noopener"><code>stripe-server/</code></a> to Vercel or Netlify.</li>
+      <li>Set <code>STRIPE_CONFIG.apiUrl</code> and <code>enabled: true</code> in <code>app.js</code>.</li>
+      <li>Add your Stripe publishable key to <code>STRIPE_CONFIG.publishableKey</code>.</li>
+    </ol>
+    <p class="payments-info-hint">Until then, clicking <strong>Pay with card</strong> shows setup instructions. Email florist for pick-up still works without Stripe.</p>`;
+}
+
 /* ── Geo utilities ── */
 
 function haversineKm(lat1, lng1, lat2, lng2) {
@@ -802,7 +890,8 @@ function buildFloristPickupEmail(order) {
 function renderOrderQueue() {
   const el = document.getElementById('orderQueue');
   if (orderQueue.length === 0) {
-    el.innerHTML = '<p class="empty-queue">No orders yet. Complete a checkout to see routed orders here.</p>';
+    el.innerHTML =
+      '<p class="empty-queue">No orders yet. Complete a checkout to see routed orders here — each order will show a payment status badge and Pay with card button.</p>';
     return;
   }
 
@@ -813,16 +902,31 @@ function renderOrderQueue() {
           `<option value="${f.id}" ${f.id === order.assignedFloristId ? 'selected' : ''}>${f.name} (${f.suburb})</option>`
       ).join('');
 
+      const paymentStatus = getOrderPaymentStatus(order);
+      const paymentBadgeClass =
+        paymentStatus === 'paid' ? 'paid' : paymentStatus === 'failed' ? 'failed' : 'pending';
+      const showPayBtn = paymentStatus !== 'paid';
+      const stripeReady = isStripeConfigured();
+      const payBtnLabel = stripeReady ? 'Pay with card' : 'Pay with card (setup needed)';
+      const payBtnTitle = stripeReady
+        ? 'Open Stripe Checkout for this order'
+        : 'Configure Stripe in app.js — see stripe-server/README';
+      const grandTotal = order.total + (order.deliveryFee || 0);
+
       return `
       <div class="order-card" data-order-id="${order.id}">
         <div class="order-card-header">
           <span class="order-id">${order.id}</span>
-          <span class="order-status">${order.status}</span>
+          <div class="order-badges">
+            <span class="payment-badge ${paymentBadgeClass}">${paymentStatusLabel(paymentStatus)}</span>
+            <span class="order-status">${order.status}</span>
+          </div>
         </div>
         <p><strong>${order.recipientName || 'No name'}</strong> · ${order.postcode} ${order.suburb ? `(${order.suburb})` : ''}</p>
         <p>${order.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</p>
-        <p>Total: $${order.total.toFixed(2)} · Routed to <strong>${order.assignedFloristName}</strong> (${order.distanceKm.toFixed(1)} km)</p>
+        <p>Total: $${grandTotal.toFixed(2)}${order.deliveryFee ? ` (incl. $${order.deliveryFee.toFixed(2)} delivery)` : ''} · Routed to <strong>${order.assignedFloristName}</strong> (${order.distanceKm.toFixed(1)} km)</p>
         <div class="order-actions">
+          ${showPayBtn ? `<button class="btn-stripe${stripeReady ? '' : ' btn-stripe--demo'}" data-pay="${order.id}" title="${payBtnTitle}">${payBtnLabel}</button>` : ''}
           <button class="btn-email" data-email="${order.id}">✉ Email florist (pick-up)</button>
         </div>
         <div class="order-reassign">
@@ -848,6 +952,10 @@ function renderOrderQueue() {
       const url = buildFloristPickupEmail(order);
       if (url) window.open(url, '_blank', 'noopener');
     });
+  });
+
+  el.querySelectorAll('[data-pay]').forEach((btn) => {
+    btn.addEventListener('click', () => startStripeCheckout(btn.dataset.pay));
   });
 }
 
@@ -934,6 +1042,7 @@ function placeOrder() {
     postcode: result.location.postcode,
     suburb: result.location.suburb,
     recipientName,
+    customerEmail: document.getElementById('checkoutEmail').value.trim(),
     notes,
     cardMessage,
     items,
@@ -943,22 +1052,37 @@ function placeOrder() {
     distanceKm: result.winnerDistanceKm,
     deliveryFee: result.deliveryFee,
     status: result.needsManualReview ? 'Needs review' : 'Routed',
+    paymentStatus: 'pending',
+    stripeSessionId: null,
     createdAt: new Date().toISOString(),
   };
 
   orderQueue.unshift(order);
   lastOrder = order;
+  saveOrderQueue();
   renderOrderQueue();
 
   const modal = document.getElementById('orderModal');
   document.getElementById('modalMessage').textContent =
     `Order ${order.id} has been routed to ${result.winner.name} in ${result.winner.suburb} (${result.winnerDistanceKm.toFixed(1)} km from ${order.suburb}).`;
+
+  const payBtn = document.getElementById('modalPayNow');
+  const stripeReady = isStripeConfigured();
+  payBtn.hidden = false;
+  payBtn.disabled = false;
+  payBtn.textContent = stripeReady ? 'Pay with card' : 'Pay with card (setup needed)';
+  payBtn.classList.toggle('btn-stripe--demo', !stripeReady);
+  payBtn.title = stripeReady
+    ? 'Open Stripe Checkout for this order'
+    : 'Configure Stripe in app.js — see stripe-server/README';
+
   modal.showModal();
 
   cart = [];
   document.getElementById('checkoutPostcode').value = '';
   document.getElementById('checkoutSuburb').value = '';
   document.getElementById('checkoutName').value = '';
+  document.getElementById('checkoutEmail').value = '';
   document.getElementById('checkoutNotes').value = '';
   document.getElementById('checkoutCardMessage').value = '';
   document.getElementById('assignedFlorist').hidden = true;
@@ -982,7 +1106,112 @@ function reassignOrder(orderId, floristId) {
   order.assignedFloristName = florist.name;
   order.distanceKm = distanceKm;
   order.status = 'Manually reassigned';
+  saveOrderQueue();
   renderOrderQueue();
+}
+
+/* ── Stripe Checkout ── */
+
+async function startStripeCheckout(orderId) {
+  if (!isStripeConfigured()) {
+    alert(
+      'Stripe is not configured yet.\n\n1. Deploy stripe-server/ to Vercel or Netlify (see stripe-server/README.md)\n2. Set STRIPE_CONFIG.apiUrl in app.js\n3. Set STRIPE_CONFIG.enabled to true\n\nUntil then, use "Email florist (pick-up)" to notify the florist.'
+    );
+    return;
+  }
+
+  const order = orderQueue.find((o) => o.id === orderId);
+  if (!order) {
+    alert('Order not found.');
+    return;
+  }
+
+  if (getOrderPaymentStatus(order) === 'paid') {
+    alert('This order is already paid.');
+    return;
+  }
+
+  const payButtons = document.querySelectorAll(`[data-pay="${orderId}"]`);
+  payButtons.forEach((btn) => {
+    btn.disabled = true;
+    btn.textContent = 'Redirecting to Stripe…';
+  });
+
+  const grandTotal = order.total + (order.deliveryFee || 0);
+
+  try {
+    const res = await fetch(STRIPE_CONFIG.apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: order.id,
+        items: order.items,
+        total: grandTotal,
+        deliveryFee: order.deliveryFee || 0,
+        customerEmail: order.customerEmail || undefined,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || `Server error (${res.status})`);
+    }
+
+    if (!data.url) {
+      throw new Error('No checkout URL returned from server');
+    }
+
+    order.stripeSessionId = data.sessionId || null;
+    saveOrderQueue();
+    window.location.href = data.url;
+  } catch (err) {
+    console.error('Stripe checkout error:', err);
+    order.paymentStatus = 'failed';
+    saveOrderQueue();
+    renderOrderQueue();
+    alert(`Payment could not be started: ${err.message}`);
+  }
+}
+
+function showPaymentToast(message, type) {
+  const toast = document.getElementById('paymentToast');
+  if (!toast) return;
+  toast.textContent = message;
+  toast.className = `payment-toast ${type || ''}`;
+  toast.hidden = false;
+  setTimeout(() => {
+    toast.hidden = true;
+  }, 6000);
+}
+
+function handlePaymentReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const payment = params.get('payment');
+  const orderId = params.get('order_id');
+  const sessionId = params.get('session_id');
+
+  if (!payment || !orderId) return;
+
+  if (payment === 'success') {
+    const order = orderQueue.find((o) => o.id === orderId);
+    if (order) {
+      order.paymentStatus = 'paid';
+      order.stripeSessionId = sessionId || order.stripeSessionId;
+      order.paidAt = new Date().toISOString();
+      saveOrderQueue();
+      renderOrderQueue();
+      showPaymentToast(`Payment successful for ${orderId}.`, 'success');
+    } else {
+      showPaymentToast(`Payment received for ${orderId}, but order was not found in queue.`, 'warning');
+    }
+    switchView('routing');
+  } else if (payment === 'cancelled') {
+    showPaymentToast(`Payment cancelled for ${orderId}.`, 'cancelled');
+    switchView('routing');
+  }
+
+  const cleanUrl = window.location.pathname + window.location.hash;
+  window.history.replaceState({}, '', cleanUrl);
 }
 
 /* ── Navigation ── */
@@ -1023,10 +1252,13 @@ function checkHeroPostcode() {
 /* ── Init ── */
 
 document.addEventListener('DOMContentLoaded', () => {
+  loadOrderQueue();
   renderProducts();
   renderFlorists();
   renderCart();
+  renderPaymentsInfo();
   renderOrderQueue();
+  handlePaymentReturn();
 
   document.querySelectorAll('.nav-tab').forEach((tab) => {
     tab.addEventListener('click', () => switchView(tab.dataset.view));
@@ -1059,5 +1291,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!lastOrder) return;
     const url = buildFloristPickupEmail(lastOrder);
     if (url) window.open(url, '_blank', 'noopener');
+  });
+  document.getElementById('modalPayNow').addEventListener('click', () => {
+    if (!lastOrder) return;
+    document.getElementById('orderModal').close();
+    startStripeCheckout(lastOrder.id);
   });
 });

@@ -1,0 +1,12 @@
+{
+  "name": "bloomsydney-stripe-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Serverless Stripe Checkout session creator for BloomSydney",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "stripe": "^17.7.0"
+  }
+}
