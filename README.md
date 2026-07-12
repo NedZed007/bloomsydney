@@ -9,6 +9,13 @@ A florist marketplace for Greater Sydney. Customers browse arrangements and plac
 - Delivery fee estimate ($35 per 10 km)
 - Order queue with manual reassignment
 - One-click Gmail compose for pick-up orders to florists
+- **Stripe Checkout** for card payments (see [stripe-server/README.md](stripe-server/README.md))
+
+## Stripe payments
+
+Card payments use Stripe Checkout with a small serverless backend in `stripe-server/`. Configure `STRIPE_CONFIG` in `app.js`, deploy the backend to Vercel or Netlify, then use **Pay with card** on the Order Routing queue.
+
+Full setup: [stripe-server/README.md](stripe-server/README.md)
 
 ## Run locally
 
