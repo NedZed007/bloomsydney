@@ -200,6 +200,91 @@ body {
   border-radius: 999px;
 }
 
+/* Payments info panel (Order Routing) */
+.payments-info {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #635bff;
+}
+
+.payments-info--setup {
+  border-left-color: #d4a017;
+  background: linear-gradient(135deg, #fffdf5 0%, var(--white) 100%);
+}
+
+.payments-info--ready {
+  border-left-color: #2d6a4f;
+  background: linear-gradient(135deg, #f4fbf6 0%, var(--white) 100%);
+}
+
+.payments-info-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.payments-info-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.payments-info-icon {
+  font-size: 1.25rem;
+}
+
+.payments-status-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  margin-left: auto;
+}
+
+.payments-status-badge.setup {
+  background: #fef3e2;
+  color: #9a6b2f;
+}
+
+.payments-status-badge.ready {
+  background: #e8f5ec;
+  color: #2d6a4f;
+}
+
+.payments-info p {
+  color: var(--ink-muted);
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.payments-info p:last-child {
+  margin-bottom: 0;
+}
+
+.payments-info-hint {
+  font-size: 0.82rem !important;
+  font-style: italic;
+}
+
+.payments-setup-steps {
+  margin: 0.5rem 0 0.75rem 1.25rem;
+  color: var(--ink-muted);
+  font-size: 0.88rem;
+}
+
+.payments-setup-steps li {
+  margin-bottom: 0.35rem;
+}
+
+.payments-setup-steps a {
+  color: var(--rose);
+}
+
 /* Routing page delivery checker */
 .routing-checker {
   background: var(--white);
@@ -773,6 +858,15 @@ body {
 .btn-stripe:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.btn-stripe--demo {
+  background: #7c75d4;
+  border: 1px dashed rgba(255, 255, 255, 0.5);
+}
+
+.btn-stripe--demo:hover:not(:disabled) {
+  background: #635bff;
 }
 
 .btn-stripe.full-width {
